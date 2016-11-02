@@ -7,7 +7,7 @@
 * ***********************************************/
 
 #ifndef _ESP8266_FLASH_H_
-#define _ESP8266_FLASH_H_
+#define _ESP8266_FLASH_H
 
 #include "user_interface.h"
 #include <ets_sys.h>
@@ -23,7 +23,7 @@
 //STORE PROGRAM INFO 1 SECTOR BEFORE THAT
 //DO NOT CHANGE THIS ADDRESS !
 //VALID FOR 4M FLASH CHIP WITH 1024+1024 MAP
-#define FLASH_STORE_SECTOR  0x3FE
+#define FLASH_STORE_SECTOR  0x401
 
 SpiFlashOpResult ESP8266_FLASH_erase(uint16_t sector_address);
 SpiFlashOpResult ESP8266_FLASH_write(uint16_t sector_address, uint32_t* source_address, uint32_t size);
