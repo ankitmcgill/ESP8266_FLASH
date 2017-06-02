@@ -44,7 +44,7 @@ void ICACHE_FLASH_ATTR ESP8266_FLASH_SetDebug(uint8_t debug_on)
     _esp8266_flash_debug = debug_on;
 }
 
-void ICACHE_FLASH_ATTR ESP8266_FLASH_EraseSector(uint16_t sector_number)
+SpiFlashOpResult ICACHE_FLASH_ATTR ESP8266_FLASH_EraseSector(uint16_t sector_number)
 {
     //ERASE THE SPECIFIED SECTOR NUMBER
     
@@ -52,38 +52,49 @@ void ICACHE_FLASH_ATTR ESP8266_FLASH_EraseSector(uint16_t sector_number)
     if(_esp8266_flash_check_address_validity(sector_number * 4096))
     {
         //VALID
-        spi_flash_erase_sector(sector_number);
         if(_esp8266_flash_debug)
         {
             os_printf("ESP8266 : FLASH : Sector #%u erased\n", sector_number);
         }
-        return;
+        return spi_flash_erase_sector(sector_number);
     }
     //INVALID
     if(_esp8266_flash_debug)
     {
         os_printf("ESP8266 : FLASH : Sector #%u invalid. Not erased\n", sector_number);
     }
-    return;
+    return SPI_FLASH_RESULT_ERR;
 }
 
-void ICACHE_FLASH_ATTR ESP8266_FLASH_EraseBlock(uint16_t sector_number, uint16_t num_blocks)
+SpiFlashOpResult ICACHE_FLASH_ATTR ESP8266_FLASH_EraseBlock(uint16_t sector_number, uint16_t num_blocks)
 {
     //ERASE A CHAIN OF SECTORS STARTING AT THE SPECIFIED SECTOR
     //VALIDITY OF A SECTOR ADDRESS WOULD BE DONE IN THE ERASE SECTOR SINGLE FUNCTION
     
     uint8_t i;
+    uint8_t errors = 0;
+
     for(i = 0; i < num_blocks; i++)
     {
-        ESP8266_FLASH_EraseSector(sector_number + i);
+        if(ESP8266_FLASH_EraseSector(sector_number + i) == SPI_FLASH_RESULT_ERR)
+        {
+            errors = 1;
+        }
     }
+
     if(_esp8266_flash_debug)
     {
         os_printf("ESP8266 : FLASH : Sector chain erase of length %u starting at sector #%u done\n", num_blocks, sector_number);
     }
+
+    if(errors)
+    {
+        return SPI_FLASH_RESULT_ERR;
+    }
+    return SPI_FLASH_RESULT_OK;
 }
 
-void ICACHE_FLASH_ATTR ESP8266_FLASH_WriteAddress(uint32_t flash_address, uint32_t* source_address, uint32_t size)
+SpiFlashOpResult ICACHE_FLASH_ATTR ESP8266_FLASH_WriteAddress(uint32_t flash_address, uint32_t* source_address, uint32_t size)
 {
     //COPY SPECIFIED NUMBER OF BYTES FROM THE SOURCE ADDRESS INTO THE FLASH ADDRESS
     //NOTE FLASH NEEDS TO BE ERASED BEFORE IT CAN BE WRITTEN INTO, AND ERASE HAPPENS ONLY
@@ -96,26 +107,32 @@ void ICACHE_FLASH_ATTR ESP8266_FLASH_WriteAddress(uint32_t flash_address, uint32
         {
             os_printf("ESP8266 : FLASH : Flash write. Starting flash address %x invalid\n", flash_address);
         }
-        return;
+        return SPI_FLASH_RESULT_ERR;
     }
     
     uint16_t starting_sector_num = (flash_address / 4096);
     uint16_t num_blocks = (size / 4096);
-    
+    uint8_t err_1, err_2;
+
     //ERASE BLOCKS
-    ESP8266_FLASH_EraseBlock(starting_sector_num, num_blocks);
+    err_1 = ESP8266_FLASH_EraseBlock(starting_sector_num, num_blocks);
     
     //WRITE NOW
-    spi_flash_write(flash_address, source_address, size);
+    err_2 = spi_flash_write(flash_address, source_address, size);
     
     if(_esp8266_flash_debug)
     {
         os_printf("ESP8266 : FLASH : Flash write of %u bytes into address %x done\n", size, flash_address);
     }
-    return;      
+
+    if((err_1 == SPI_FLASH_RESULT_ERR) || (err_2 == SPI_FLASH_RESULT_ERR))
+    {
+        return SPI_FLASH_RESULT_ERR;
+    }
+    return SPI_FLASH_RESULT_OK;
 }
 
-void ICACHE_FLASH_ATTR ESP8266_FLASH_ReadAddress(uint32_t flash_address, uint32_t* destination_address, uint32_t size)
+SpiFlashOpResult ICACHE_FLASH_ATTR ESP8266_FLASH_ReadAddress(uint32_t flash_address, uint32_t* destination_address, uint32_t size)
 {
     //READ THE SPECIFIED NUMBER OF BYTES FROM FLASH INTO THE DESTINATION ADDRESS
     
@@ -126,17 +143,16 @@ void ICACHE_FLASH_ATTR ESP8266_FLASH_ReadAddress(uint32_t flash_address, uint32_
         {
             os_printf("ESP8266 : FLASH : Flash read. Starting flash address %x invalid\n", flash_address);
         }
-        return;
+        return SPI_FLASH_RESULT_ERR;
     }
-    
-    //READ
-    spi_flash_read(flash_address, destination_address, size);
     
     if(_esp8266_flash_debug)
     {
         os_printf("ESP8266 : FLASH : Flash read of %u bytes from address %x done\n", size, flash_address);
     }
-    return;  
+    
+    //READ
+    return spi_flash_read(flash_address, destination_address, size);
 }
 
 static uint8_t ICACHE_FLASH_ATTR _esp8266_flash_check_address_validity(uint32_t flash_address)
