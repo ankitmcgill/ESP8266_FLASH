@@ -39,9 +39,9 @@ static uint8_t _esp8266_flash_debug;
 
 void ICACHE_FLASH_ATTR ESP8266_FLASH_SetDebug(uint8_t debug_on)
 {
-	//SET DEBUG PRINTF ON(1) OR OFF(0)
-
-	_esp8266_flash_debug = debug_on;
+    //SET DEBUG PRINTF ON(1) OR OFF(0)
+    
+    _esp8266_flash_debug = debug_on;
 }
 
 void ICACHE_FLASH_ATTR ESP8266_FLASH_EraseSector(uint16_t sector_number)
