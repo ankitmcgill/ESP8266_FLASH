@@ -33,15 +33,17 @@
 #ifndef _ESP8266_FLASH_H_
 #define _ESP8266_FLASH_H_
 
-#include <stdint.h>
-#include <ets_sys.h>
-#include <spi_flash.h>
+#include "ets_sys.h"
+#include "osapi.h"
+#include "gpio.h"
+#include "os_type.h"
 #include "user_interface.h"
+#include "spi_flash.h"
 
 #define ESP8266_FLASH_MAX_ADDRESS               0x400000
 #define ESP8266_FLASH_ESP_BLANK_BIN_ADDRESS     0x3FE000
 #define ESP8266_FLASH_ESP_INIT_BIN_ADDRESS      0x3FC000
-#define ESP8266_FLASH_ESP_IROM0TEX_BIN_ADDRESS  0x100000
+#define ESP8266_FLASH_ESP_IROM0TEX_BIN_ADDRESS  0x10000
 
 //FUNCTION PROTOTYPES/////////////////////////////////////////////
 //CONFIGURATION FUNCTIONS

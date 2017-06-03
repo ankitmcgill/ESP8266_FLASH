@@ -146,13 +146,15 @@ SpiFlashOpResult ICACHE_FLASH_ATTR ESP8266_FLASH_ReadAddress(uint32_t flash_addr
         return SPI_FLASH_RESULT_ERR;
     }
     
+    //READ
+    SpiFlashOpResult val = spi_flash_read(flash_address, destination_address, size);
+
     if(_esp8266_flash_debug)
     {
-        os_printf("ESP8266 : FLASH : Flash read of %u bytes from address %x done\n", size, flash_address);
+        os_printf("ESP8266 : FLASH : Flash read of %u bytes from address %x done result = %u\n", size, flash_address, val);
     }
     
-    //READ
-    return spi_flash_read(flash_address, destination_address, size);
+    return val;
 }
 
 static uint8_t ICACHE_FLASH_ATTR _esp8266_flash_check_address_validity(uint32_t flash_address)
@@ -177,9 +179,16 @@ static uint8_t ICACHE_FLASH_ATTR _esp8266_flash_check_address_validity(uint32_t 
         //FLASH ADDRESS WITHIN THE FIRST 64KNB AREA WHERE FLASH.BIN
         //RESIDES. TECHNICALLY WE COULD USE IT DEPENDING ON SIDE OF FLASH.BIN
         //BUT WE WILL DISALLOW IT
-        return 0
+        return 0;
     }
     
+    //LAST CHECK THAT THE ADDRESS IS WORD ALIGNED (4 BYTE ALIGNED)
+    if((flash_address & 1) != 0)
+    {
+    	//NOT WORD ALIGNED
+    	return 0;
+    }
+
     //FLASH ADDRESS VALID
     return 1;
 }
