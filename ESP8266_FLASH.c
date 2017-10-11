@@ -126,8 +126,6 @@ SpiFlashOpResult ICACHE_FLASH_ATTR ESP8266_FLASH_WriteAddress(uint32_t flash_add
         return SPI_FLASH_RESULT_ERR;
     }
 
-    os_printf("a\n");
-
     //VERIFY SOURCE ADDRESS
     if(!_esp8266_flash_check_address_word_alignment(source_address))
     {
@@ -137,8 +135,6 @@ SpiFlashOpResult ICACHE_FLASH_ATTR ESP8266_FLASH_WriteAddress(uint32_t flash_add
         }
         return SPI_FLASH_RESULT_ERR;
     }
-
-    os_printf("b\n");
 
     uint16_t starting_sector = (flash_address / ESP8266_FLASH_SECTOR_SIZE_BYTES);
     uint16_t num_sectors = (size_bytes / ESP8266_FLASH_SECTOR_SIZE_BYTES) + ((size_bytes % ESP8266_FLASH_SECTOR_SIZE_BYTES) != 0);
@@ -150,9 +146,7 @@ SpiFlashOpResult ICACHE_FLASH_ATTR ESP8266_FLASH_WriteAddress(uint32_t flash_add
 
     //COPY DATA INTO TEMPORARY BUFFER + CRC8 BYTE (1 WORD)
     uint32_t* buffer = (uint32_t*)os_zalloc(_32_bit_blocks_required);
-    os_printf("c\n");
     os_memcpy((uint8_t*)buffer, (uint8_t*)source_address, size_bytes);
-    os_printf("d\n");
     
     //ADD CRC8 TO THE LAST BYYE OF UINT32_T BLOCK CHAIN
     crc = _esp8266_flash_calculate_crc8((uint8_t*)buffer, size_bytes);
@@ -164,7 +158,6 @@ SpiFlashOpResult ICACHE_FLASH_ATTR ESP8266_FLASH_WriteAddress(uint32_t flash_add
         os_free(buffer);
         return SPI_FLASH_RESULT_ERR;
     }
-    os_printf("r\n");
 
     //WRITE DATA
     if(spi_flash_write(flash_address, buffer, _32_bit_blocks_required * 4) == SPI_FLASH_RESULT_ERR)
@@ -172,7 +165,6 @@ SpiFlashOpResult ICACHE_FLASH_ATTR ESP8266_FLASH_WriteAddress(uint32_t flash_add
         os_free(buffer);
         return SPI_FLASH_RESULT_ERR;
     }
-    os_printf("f\n");
     if(_esp8266_flash_debug)
     {
         os_printf("ESP8266 : FLASH : Flash write of %u bytes into address %x done with CRC8 %02X\n", size_bytes, flash_address, crc);
